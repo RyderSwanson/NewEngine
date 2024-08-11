@@ -2,3 +2,11 @@
 *.ipch
 ipch/ 
 *.VC.db
+*.pdb
+*.ipdb
+*.iobj
+*.ilk
+x64/*
+NewEngine/x64/*
+.vs/*
+*.suo
