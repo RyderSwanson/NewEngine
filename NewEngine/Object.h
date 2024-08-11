@@ -1,28 +1,22 @@
 #pragma once
 
-#include "ObjProto.h"
+#include "Header.h"
+#include "Shader.h"
+#include "Model.h"
 
-class Object : public ObjProto {
+class Object{
 public:
-	
-	/// <summary>
-	/// constructor, loads in all object data
-	/// </summary>
-	/// <param name="shader"></param>
-	/// <param name="model"></param>
-	/// <param name="location"></param>
-	/// <param name="scale"></param>
-	Object(Shader* shader, Model& model, glm::vec3 location, glm::vec3 scale);
+	Object(Shader* shader, Model& model, glm::vec3 location, glm::vec3 scale, int id, bool dontDraw = false);
 
-	/// <summary>
-	/// setup model matrix and draw object
-	/// </summary>
 	void draw();
 
-	/// <summary>
-	/// setters
-	/// </summary>
-	/// <param name="pos"></param>
 	void setPos(glm::vec3 pos);
 	void setScale(glm::vec3 scale);
+
+	Shader* shader;
+	Model* model;
+	glm::vec3 position;
+	glm::vec3 scale;
+	int id;
+	bool dontDraw;
 };

@@ -78,6 +78,9 @@
     <ClCompile Include="GUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ObjectManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.h">
@@ -96,9 +99,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjProto.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Object.h">
@@ -149,12 +149,15 @@
     <ClInclude Include="SharedVariables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ObjectManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\dirLight.fs">
+    <None Include="Shaders\defaultShader.fs">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\dirLight.vs">
+    <None Include="Shaders\defaultShader.vs">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\gui.fs">
@@ -163,22 +166,10 @@
     <None Include="Shaders\gui.vs">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\lightingShader.fs">
+    <None Include="Shaders\emissionShader.fs">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\lightingShader.vs">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\pointLight.fs">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\pointLight.vs">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\shader.fs">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\shader.vs">
+    <None Include="Shaders\emissionShader.vs">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\skybox.fs">

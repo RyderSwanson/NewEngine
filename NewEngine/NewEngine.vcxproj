@@ -169,6 +169,7 @@
     <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Objective.cpp" />
+    <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stb_image.cpp" />
@@ -193,22 +194,18 @@
     <ClInclude Include="Monster.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Objective.h" />
-    <ClInclude Include="ObjProto.h" />
+    <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SharedVariables.h" />
     <ClInclude Include="TestFunctions.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\dirLight.fs" />
-    <None Include="Shaders\dirLight.vs" />
+    <None Include="Shaders\defaultShader.fs" />
+    <None Include="Shaders\defaultShader.vs" />
     <None Include="Shaders\gui.fs" />
     <None Include="Shaders\gui.vs" />
-    <None Include="Shaders\lightingShader.fs" />
-    <None Include="Shaders\lightingShader.vs" />
-    <None Include="Shaders\pointLight.fs" />
-    <None Include="Shaders\pointLight.vs" />
-    <None Include="Shaders\shader.fs" />
-    <None Include="Shaders\shader.vs" />
+    <None Include="Shaders\emissionShader.fs" />
+    <None Include="Shaders\emissionShader.vs" />
     <None Include="Shaders\skybox.fs" />
     <None Include="Shaders\skybox.vs" />
   </ItemGroup>

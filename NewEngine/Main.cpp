@@ -16,8 +16,6 @@ int main(void) {
 
 	std::vector<glm::vec3> forest, forestScale;
 
-	std::cout << "***" << std::endl;
-
 	srand(13);
 
 	//irrKlang
@@ -37,7 +35,7 @@ int main(void) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	//creating a window object
-	GLFWwindow* window = createWindow(600, 600, "NewEngine", 0);
+	GLFWwindow* window = createWindow(800, 800, "NewEngine", 0);
 
 	//turn on glad (so we can use opengl)
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -46,14 +44,12 @@ int main(void) {
 		return -1;
 	}
 
-	Shader theShader("Shaders/dirLight.vs", "Shaders/dirLight.fs");
-	Shader lightingShader("Shaders/lightingShader.vs", "Shaders/lightingShader.fs");
+	Shader theShader("Shaders/defaultShader.vs", "Shaders/defaultShader.fs");
+	Shader emissionShader("Shaders/emissionShader.vs", "Shaders/emissionShader.fs");
 	Shader skyboxShader("Shaders/skybox.vs", "Shaders/skybox.fs");
 	Shader guiShader("Shaders/gui.vs", "Shaders/gui.fs");
 	//setting opengl viewport size
-	glViewport(0, 0, 600, 600);
-
-	
+	glViewport(0, 0, 800, 800);
 
 	//background color, should be black
 	glClearColor(0.005, 0.0, 0.01, 1);
@@ -92,13 +88,13 @@ int main(void) {
 
 
 	//light cube
-	lightingShader.use();
+	emissionShader.use();
 
-	lightingShader.setMat4("model", model);
-	lightingShader.setMat4("view", view);
-	setProjection(lightingShader, width, height, fov);
-	lightingShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-	lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	emissionShader.setMat4("model", model);
+	emissionShader.setMat4("view", view);
+	setProjection(emissionShader, width, height, fov);
+	emissionShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+	emissionShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 	
 	//skybox shader setup
 	skyboxShader.use();
@@ -114,40 +110,23 @@ int main(void) {
 	guiShader.setMat4("view", view);
 	setProjection(guiShader, width, height, fov);
 	
-	//test model loading
-	//Model test("Assets/backpack/backpack.obj");
-	//Object obj(theShader, test, glm::vec3(0, 0, 0), glm::vec3(1,1,1));
-
-	Model icoModel("Assets/ico/ico.obj");
-	Object ico(&theShader, icoModel, glm::vec3(0, -1.01, -120), glm::vec3(1, 1, 1));
-
-	Model groundModel("Assets/ground/ground.obj");
-	Object ground(&theShader, groundModel, glm::vec3(0, -2, 0), glm::vec3(1));
-
+	//model loading
+	ObjectManager objectManager;
+	Object* ico = objectManager.createNewObject(&theShader, "Assets/ico/ico.obj", glm::vec3(0, -1.01, -120), glm::vec3(1, 1, 1));
+	Object* ground = objectManager.createNewObject(&theShader, "Assets/ground/ground.obj", glm::vec3(0, -2, 0), glm::vec3(1));
+	Object* building = objectManager.createNewObject(&theShader, "Assets/building/building.obj", glm::vec3(-10, -2, 10), glm::vec3(1.0f));
+	Object* cube = objectManager.createNewObject(&emissionShader, "Assets/cube/cube.obj", lightPos, glm::vec3(0.1f));
+	Object* skybox = objectManager.createNewObject(&skyboxShader, "Assets/skybox/skybox.obj", glm::vec3(0, -2, 0), glm::vec3(500));
+	Object* gui = objectManager.createNewObject(&guiShader, "Assets/gui/gui.obj", glm::vec3(0, 0, -1), glm::vec3(1));
+	
 	int numTrees = 800;
-	Model treeModel("Assets/tree/tree.obj");
-	Object tree(&theShader, treeModel, glm::vec3(0, -2, 0), glm::vec3(1));
+	Object* tree = objectManager.createNewObject(&theShader, "Assets/tree/tree.obj", glm::vec3(0, -2, 0), glm::vec3(1), true);
 	generateForest(forest, forestScale, numTrees);
 
-	//Model buildingModel("Assets/building/building.obj");
-	//Object building(&theShader, buildingModel, glm::vec3(-10, -2, 10), glm::vec3(1.0f));
-
-	//light cube
-	Model cubeModel("Assets/cube/cube.obj");
-	Object cube(&lightingShader, cubeModel, lightPos, glm::vec3(0.1f));
-
-	//skybox
-	Model skyboxModel("Assets/skybox/skybox.obj");
-	Object skybox(&skyboxShader, skyboxModel, glm::vec3(0, -2, 0), glm::vec3(500));
-
-	//gui
-	Model guiModel("Assets/gui/gui.obj");
-	Object gui(&guiShader, guiModel, glm::vec3(0, 0, -1), glm::vec3(1));
-
 	//game elements
-	Objective objective(&theShader, &cube, engine, cameraPos);
+	Objective objective(&theShader, cube, engine, cameraPos);
 	imgui.numCollected = &objective.numCollected;
-	Monster monster(&ico, engine, cameraFront, cameraPos);
+	Monster monster(ico, engine, cameraFront, cameraPos);
 	
 	//audio stuff
 	irrklang::ISound* walking;
@@ -158,8 +137,6 @@ int main(void) {
 	float batteryLevel = 1;
 	//main game loop
 	while (!glfwWindowShouldClose(window)) {
-		//tests.testCollision(playerY);
-
 		currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -187,10 +164,9 @@ int main(void) {
 		theShader.setMat4("view", view);
 		theShader.setVec3("viewPos", cameraPos);
 
-		lightingShader.use();
-		setProjection(lightingShader, width, height, fov);
-		//tests.testProjectionMatrix(lightingShader);
-		lightingShader.setMat4("view", view);
+		emissionShader.use();
+		setProjection(emissionShader, width, height, fov);
+		emissionShader.setMat4("view", view);
 
 		//skybox
 		view = glm::lookAt(glm::vec3(0, -1, 0) , glm::vec3(0,-1,0) + cameraFront, cameraUp);
@@ -198,38 +174,23 @@ int main(void) {
 		setProjection(skyboxShader, width, height, fov);
 		skyboxShader.setMat4("view", view);
 
-		//int currentTime = time(NULL);
-
 		//obj.draw();
 		objective.update(cameraPos, batteryLevel, deltaTime);
 		updateFlashLight(theShader, guiShader, batteryLevel, deltaTime);
 		monster.update(cameraPos, cameraFront, deltaTime, flashLightOn);
 
 		//draw stuff
-		gui.draw();
-		skybox.draw();
-		ico.draw();
-		cube.draw();
-		ground.draw();
+		objectManager.drawObjects();
 
+		drawForest(*tree, forest, forestScale, numTrees);
 
-		//building.draw();
-
-		drawForest(tree, forest, forestScale, numTrees);
-
-
-		////test of projection
-		//tests.testProjectionMatrix(theShader);
-		//ico.draw();
-
-		//tests.testFlashLight(theShader);
 		imgui.render();
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-
+	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
 }
@@ -531,7 +492,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			fullscreen = 1;
 		}
 		else {
-			glfwSetWindowMonitor(window, NULL, 100, 100, 600, 600, 0);
+			glfwSetWindowMonitor(window, NULL, 100, 100, 800, 800, 0);
 			glfwSwapInterval(0);
 			fullscreen = 0;
 		}

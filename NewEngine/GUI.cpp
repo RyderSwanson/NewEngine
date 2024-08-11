@@ -40,7 +40,7 @@ void GUI::render() {
 		//make background transparent
 		ImGui::SetNextWindowBgAlpha(0.35f);
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoSavedSettings;
 
 		//position stuff
 		const float PAD = 10.0f;
@@ -62,7 +62,11 @@ void GUI::render() {
 		}
 		ImGui::Separator();
 		ImGui::Checkbox("debug", &debug);
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
+		ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
+		if (ImGui::IsMousePosValid())
+			ImGui::Text("Mouse Position: (%.1f,%.1f)", io->MousePos.x, io->MousePos.y);
+		else
+			ImGui::Text("Mouse Position: <invalid>");
 
 		ImGui::End();
 	}

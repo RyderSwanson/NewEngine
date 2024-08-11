@@ -1,10 +1,13 @@
 #include "Object.h"
 
-Object::Object(Shader* shader, Model& model, glm::vec3 location, glm::vec3 scale) {
+// the dontDraw variable is used to disable drawing from the ObjectManger
+Object::Object(Shader* shader, Model& model, glm::vec3 location, glm::vec3 scale, int id, bool dontDraw) {
 	this->shader = shader;
 	this->model = &model;
 	this->position = location;
 	this->scale = scale;
+	this->id = id;
+	this->dontDraw = dontDraw;
 }
 
 void Object::draw() {
