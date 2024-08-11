@@ -1,4 +1,5 @@
 #pragma once
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup") // This disables the console window, add check for debug if we want to show it
 
 #include "Header.h"
 

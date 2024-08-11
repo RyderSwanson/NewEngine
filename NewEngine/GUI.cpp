@@ -20,6 +20,8 @@ GUI::GUI(GLFWwindow* window){
 	//Imgui stuff
 	show_demo_window = true;
 	show_another_window = false;
+	
+	numCollected = NULL;
 }
 
 GUI::~GUI() {
@@ -34,12 +36,34 @@ void GUI::render() {
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	{
-		ImGui::Begin("Debug window");
+	if (pause) {
+		//make background transparent
+		ImGui::SetNextWindowBgAlpha(0.35f);
 
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+
+		//position stuff
+		const float PAD = 10.0f;
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+		ImVec2 work_size = viewport->WorkSize;
+		ImVec2 window_pos, window_pos_pivot, window_size;
+		window_size.x = work_size.x / 3;
+		window_size.y = work_size.y / 2;
+		window_pos.x = window_size.x + work_pos.x + PAD;
+		window_pos.y = work_pos.y + PAD;
+		window_pos_pivot.x = 1.0f;
+		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+		ImGui::SetNextWindowSize(window_size);
+
+		ImGui::Begin("Debug window", (bool*)true, window_flags);
+		if (ImGui::Button("Exit Game")) {
+			glfwSetWindowShouldClose(window, true);
+		}
+		ImGui::Separator();
 		ImGui::Checkbox("debug", &debug);
-
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
+
 		ImGui::End();
 	}
 
@@ -47,8 +71,6 @@ void GUI::render() {
 	{
 		static bool* p_open = (bool*)true;
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground;
-		//make background transparent
-		ImGui::SetNextWindowBgAlpha(0.35f);
 
 		//position stuff
 		const float PAD = 10.0f;
@@ -64,11 +86,9 @@ void GUI::render() {
 
 		ImGui::Begin("overlay", p_open, window_flags);
 
-		ImGui::Text("Simple overlay\n");
-		if (ImGui::IsMousePosValid())
-			ImGui::Text("Mouse Position: (%.1f,%.1f)", io->MousePos.x, io->MousePos.y);
-		else
-			ImGui::Text("Mouse Position: <invalid>");
+		if (numCollected != NULL) {
+			ImGui::Text("Points: %d", *numCollected);
+		}
 
 	}
 

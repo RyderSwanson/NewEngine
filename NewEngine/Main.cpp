@@ -1,7 +1,3 @@
-//Authors: Ryder Swanson, Natalie Simkins, Caden Guffin
-//Date: 11/30/2022
-//Description: A first person horror game set in a forest
-
 #include "Main.h"
 
 int main(void) {
@@ -150,6 +146,7 @@ int main(void) {
 
 	//game elements
 	Objective objective(&theShader, &cube, engine, cameraPos);
+	imgui.numCollected = &objective.numCollected;
 	Monster monster(&ico, engine, cameraFront, cameraPos);
 	
 	//audio stuff
@@ -245,10 +242,6 @@ void getInput(GLFWwindow* window, Shader shader, float& fov, irrklang::ISound* w
 	shader.use();
 	
 	//key detection
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
-	}
-
 	if (debug) {
 		debugMovement(window, shader, fov, walking, batteryLevel);
 	}
@@ -513,7 +506,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 //runs once per key press
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		if (pause) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			pause = 0;
@@ -539,6 +532,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		}
 		else {
 			glfwSetWindowMonitor(window, NULL, 100, 100, 600, 600, 0);
+			glfwSwapInterval(0);
 			fullscreen = 0;
 		}
 	}

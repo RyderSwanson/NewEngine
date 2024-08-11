@@ -21,4 +21,5 @@ public:
 	ImVec4 clear_color;
 	ImGuiIO* io;
 	GLFWwindow* window;
+	int* numCollected;
 };
