@@ -35,6 +35,7 @@ float playerY = -1;
 int flashLightOn = 1;
 float lastflashactivation = 0;
 float nextTurnOff = 5;
+ImVec4 ambientColor = ImVec4(0.1f, 0.1f, 0.1f, 1.0f);
 
 
 

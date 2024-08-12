@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Header.h"
+#include "ImGui/imgui.h"
 
 #define numAvgFrames 60
 
@@ -26,3 +27,4 @@ extern float playerY;
 extern int flashLightOn;
 extern float lastflashactivation;
 extern float nextTurnOff;
+extern ImVec4 ambientColor;

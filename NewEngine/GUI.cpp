@@ -67,6 +67,8 @@ void GUI::render() {
 			ImGui::Text("Mouse Position: (%.1f,%.1f)", io->MousePos.x, io->MousePos.y);
 		else
 			ImGui::Text("Mouse Position: <invalid>");
+		ImGui::Separator();
+		ImGui::ColorEdit3("clear color", (float*)&ambientColor);
 
 		ImGui::End();
 	}

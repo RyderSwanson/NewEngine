@@ -151,7 +151,7 @@ int main(void) {
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 		theShader.use();
-
+		setupLights(theShader);
 
 		//flashlightstuff
 		theShader.setVec3("flashLight.position", cameraPos);
@@ -173,6 +173,7 @@ int main(void) {
 		skyboxShader.use();
 		setProjection(skyboxShader, width, height, fov);
 		skyboxShader.setMat4("view", view);
+		skyboxShader.setVec3("fogColor", glm::vec3(ambientColor.x, ambientColor.y, ambientColor.z));
 
 		//obj.draw();
 		objective.update(cameraPos, batteryLevel, deltaTime);
@@ -560,7 +561,7 @@ void setupLights(Shader shader) {
 
 	//dirlight
 	shader.setVec3("dirLight.direction", glm::normalize(glm::vec3(-0.8f, -1.0f, 0.0f)));
-	shader.setVec3("dirLight.ambient", glm::vec3(0.33f));
+	shader.setVec3("dirLight.ambient", glm::vec3(ambientColor.x, ambientColor.y, ambientColor.y));
 
 	shader.setVec3("dirLight.diffuse", glm::vec3(0.03f, 0.03f, 0.04f));
 	shader.setVec3("dirLight.specular", glm::vec3(0.05f));
