@@ -78,6 +78,14 @@ int main(void) {
 
 	glEnable(GL_DEPTH_TEST);
 
+	// Creating frame buffer
+	unsigned int framebuffer;
+	unsigned int textureColorbuffer;
+	unsigned int rbo;
+	setupFrameBuffer(framebuffer, textureColorbuffer, rbo);
+
+	imgui.frameBufferTexture = &textureColorbuffer;
+
 	lastX = width / 2;
 	lastY = height / 2;
 
@@ -141,9 +149,6 @@ int main(void) {
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		fps(deltaTime, currentFrame);
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		getInput(window, theShader, fov, walking, batteryLevel);
 
 		collision(cameraPos, forest, numTrees);
@@ -180,13 +185,29 @@ int main(void) {
 		updateFlashLight(theShader, guiShader, batteryLevel, deltaTime);
 		monster.update(cameraPos, cameraFront, deltaTime, flashLightOn);
 
+		// Setup test buffer
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
+		glEnable(GL_DEPTH_TEST);
+
+		// test render ...
+		objectManager.drawObjects();
+
+		// Go back to default buffer
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		//draw stuff
 		objectManager.drawObjects();
 
 		drawForest(*tree, forest, forestScale, numTrees);
 
 		imgui.render();
-		
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -527,36 +548,6 @@ GLFWwindow* createWindow(int width, int height, const char* name, int fullscreen
 	return window;
 }
 
-void fps(double deltaTime, double time) {
-	double frameFps = 1.0 / deltaTime;
-
-	for (int i = 0; i < numAvgFrames - 1; i++) {
-		frameTimeBuffer[i] = frameTimeBuffer[i + 1];
-	}
-
-	frameTimeBuffer[numAvgFrames - 1] = frameFps;
-
-	if (timeSec != (int)time) {
-		double avg = 0;
-		//std::cout << std::endl;
-		//std::cout << "cur: " << frameFps << std::endl;
-
-		for (int i = 0; i < numAvgFrames; i++) {
-			avg += frameTimeBuffer[i];
-		}
-		avg /= numAvgFrames;
-		//std::cout << "avg: " << avg << std::endl;
-
-		timeSec = (int)time;
-	}
-	//std::cout << "arr: ";
-	//for (int i = 0; i < 5; i++) {
-	//	std::cout << lastFiveFrames[i] << ", ";
-	//}
-	//std::cout << std::endl;
-
-}
-
 void setupLights(Shader shader) {
 
 	//dirlight
@@ -567,8 +558,6 @@ void setupLights(Shader shader) {
 	shader.setVec3("dirLight.specular", glm::vec3(0.05f));
 
 	//point light(s)
-	shader.setVec3("pointLights[0].position", lightPos);
-
 	shader.setFloat("pointLights[0].constant", 1.0f);
 	shader.setFloat("pointLights[0].linear", 0.09f);
 	shader.setFloat("pointLights[0].quadratic", 0.032f);
@@ -654,4 +643,25 @@ void collision(glm::vec3& playerPos, std::vector<glm::vec3>& forestPos, int numT
 			playerPos.z += moveVec.y;
 		}
 	}
+}
+
+void setupFrameBuffer(GLuint& framebuffer, GLuint& colorBuffer, GLuint& rbo) {
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	// create a color attachment texture
+	glGenTextures(1, &colorBuffer);
+	glBindTexture(GL_TEXTURE_2D, colorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
+	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height); // use a single renderbuffer object for both a depth AND stencil buffer.
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -22,4 +22,5 @@ public:
 	ImGuiIO* io;
 	GLFWwindow* window;
 	int* numCollected;
+	GLuint* frameBufferTexture;
 };

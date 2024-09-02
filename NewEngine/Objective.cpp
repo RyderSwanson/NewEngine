@@ -6,6 +6,8 @@ Objective::Objective(Shader* shader, Object* goalObject, irrklang::ISoundEngine*
 	this->playerPos = playerPos;
 	numCollected = 0;
 	this->engine = engine;
+	shader->use();
+	shader->setVec3("pointLights[0].position", goalObject->position);
 }
 
 void Objective::respawn() {
