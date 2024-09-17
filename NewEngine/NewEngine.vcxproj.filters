@@ -178,5 +178,11 @@
     <None Include="Shaders\skybox.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\screenPick.fs">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\screenPick.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

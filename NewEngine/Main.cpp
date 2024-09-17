@@ -12,8 +12,6 @@ int main(void) {
 	unsigned int fragmentShader;
 	unsigned int shaderProgram;
 
-	float fov = 90;
-
 	std::vector<glm::vec3> forest, forestScale;
 
 	srand(13);
@@ -44,10 +42,18 @@ int main(void) {
 		return -1;
 	}
 
-	Shader theShader("Shaders/defaultShader.vs", "Shaders/defaultShader.fs");
-	Shader emissionShader("Shaders/emissionShader.vs", "Shaders/emissionShader.fs");
-	Shader skyboxShader("Shaders/skybox.vs", "Shaders/skybox.fs");
-	Shader guiShader("Shaders/gui.vs", "Shaders/gui.fs");
+	theShader = new Shader("Shaders/defaultShader.vs", "Shaders/defaultShader.fs");
+	shaderList->push_back(theShader);
+	emissionShader = new Shader("Shaders/emissionShader.vs", "Shaders/emissionShader.fs");
+	shaderList->push_back(emissionShader);
+	skyboxShader = new Shader("Shaders/skybox.vs", "Shaders/skybox.fs");
+	shaderList->push_back(skyboxShader);
+	guiShader = new Shader("Shaders/gui.vs", "Shaders/gui.fs");
+	shaderList->push_back(guiShader);
+	screenPickShader = new Shader("Shaders/screenPick.vs", "Shaders/screenPick.fs");
+	shaderList->push_back(screenPickShader);
+	setupShaderUniforms();
+
 	//setting opengl viewport size
 	glViewport(0, 0, 800, 800);
 
@@ -59,20 +65,9 @@ int main(void) {
 
 	//setup gui
 	GUI imgui(window);
-
-	//cube
-	theShader.use();
-
-	//matricies for 3d
-	glm::mat4 model = glm::mat4(1.0f);
-	glm::mat4 view;
-	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-	theShader.setMat4("model", model);
-	theShader.setMat4("view", view);
+	imgui.reloadShaders = reloadShaders;
 
 	glfwGetFramebufferSize(window, &width, &height);
-	setProjection(theShader, width, height, fov);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -88,51 +83,25 @@ int main(void) {
 
 	lastX = width / 2;
 	lastY = height / 2;
-
-	setupLights(theShader);
-
-	theShader.setFloat("material.shininess", 32.0f);
-	theShader.setVec3("viewPos", cameraPos);
-
-
-	//light cube
-	emissionShader.use();
-
-	emissionShader.setMat4("model", model);
-	emissionShader.setMat4("view", view);
-	setProjection(emissionShader, width, height, fov);
-	emissionShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-	emissionShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-	
-	//skybox shader setup
-	skyboxShader.use();
-
-	skyboxShader.setMat4("model", model);
-	skyboxShader.setMat4("view", view);
-	setProjection(skyboxShader, width, height, fov);
-
-	//gui shader setup
-	guiShader.use();
-
-	guiShader.setMat4("model", model);
-	guiShader.setMat4("view", view);
-	setProjection(guiShader, width, height, fov);
 	
 	//model loading
 	ObjectManager objectManager;
-	Object* ico = objectManager.createNewObject(&theShader, "Assets/ico/ico.obj", glm::vec3(0, -1.01, -120), glm::vec3(1, 1, 1));
-	Object* ground = objectManager.createNewObject(&theShader, "Assets/ground/ground.obj", glm::vec3(0, -2, 0), glm::vec3(1));
-	Object* building = objectManager.createNewObject(&theShader, "Assets/building/building.obj", glm::vec3(-10, -2, 10), glm::vec3(1.0f));
-	Object* cube = objectManager.createNewObject(&emissionShader, "Assets/cube/cube.obj", lightPos, glm::vec3(0.1f));
-	Object* skybox = objectManager.createNewObject(&skyboxShader, "Assets/skybox/skybox.obj", glm::vec3(0, -2, 0), glm::vec3(500));
-	Object* gui = objectManager.createNewObject(&guiShader, "Assets/gui/gui.obj", glm::vec3(0, 0, -1), glm::vec3(1));
+	Object* ico = objectManager.createNewObject(theShader, "Assets/ico/ico.obj", glm::vec3(0, -1.01, -120), glm::vec3(1, 1, 1));
+	Object* ground = objectManager.createNewObject(theShader, "Assets/ground/ground.obj", glm::vec3(0, -2, 0), glm::vec3(1));
+	Object* building = objectManager.createNewObject(theShader, "Assets/building/building.obj", glm::vec3(-10, -2, 10), glm::vec3(1.0f));
+	Object* cube = objectManager.createNewObject(emissionShader, "Assets/cube/cube.obj", lightPos, glm::vec3(0.1f));
+	Object* skybox = objectManager.createNewObject(skyboxShader, "Assets/skybox/skybox.obj", glm::vec3(0, -2, 0), glm::vec3(500));
+	Object* gui = objectManager.createNewObject(guiShader, "Assets/gui/gui.obj", glm::vec3(0, 0, -1), glm::vec3(1));
 	
+	// give imgui the ObjectManager
+	imgui.objectManager = &objectManager;
+
 	int numTrees = 800;
-	Object* tree = objectManager.createNewObject(&theShader, "Assets/tree/tree.obj", glm::vec3(0, -2, 0), glm::vec3(1), true);
+	Object* tree = objectManager.createNewObject(theShader, "Assets/tree/tree.obj", glm::vec3(0, -2, 0), glm::vec3(1), true);
 	generateForest(forest, forestScale, numTrees);
 
 	//game elements
-	Objective objective(&theShader, cube, engine, cameraPos);
+	Objective objective(theShader, cube, engine, cameraPos);
 	imgui.numCollected = &objective.numCollected;
 	Monster monster(ico, engine, cameraFront, cameraPos);
 	
@@ -140,49 +109,58 @@ int main(void) {
 	irrklang::ISound* walking;
 	walking = engine->play2D("Sounds/walking.mp3", true, true);
 	irrklang::ISound* ambient;
-	ambient = engine->play2D("Sounds/ambient.mp3", true, false);
+	// TODO: I commented this out temporarily
+	//ambient = engine->play2D("Sounds/ambient.mp3", true, false);
 
 	float batteryLevel = 1;
+
+	glm::mat4 view;
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
 	//main game loop
 	while (!glfwWindowShouldClose(window)) {
 		currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		getInput(window, theShader, fov, walking, batteryLevel);
+		getInput(window, *theShader, fov, walking, batteryLevel, &imgui);
 
 		collision(cameraPos, forest, numTrees);
 	
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-		theShader.use();
-		setupLights(theShader);
+		theShader->use();
+		setupLights(*theShader);
 
 		//flashlightstuff
-		theShader.setVec3("flashLight.position", cameraPos);
-		theShader.setVec3("flashLight.direction", cameraFront);
+		theShader->setVec3("flashLight.position", cameraPos);
+		theShader->setVec3("flashLight.direction", cameraFront);
 
 		//ghetto projection matrix resetting for full screen
 		glfwGetFramebufferSize(window, &width, &height);
-		setProjection(theShader, width, height, fov);
+		setProjection(*theShader, width, height, fov);
+		theShader->setMat4("view", view);
+		theShader->setVec3("viewPos", cameraPos);
 
-		theShader.setMat4("view", view);
-		theShader.setVec3("viewPos", cameraPos);
+		emissionShader->use();
+		setProjection(*emissionShader, width, height, fov);
+		emissionShader->setMat4("view", view);
 
-		emissionShader.use();
-		setProjection(emissionShader, width, height, fov);
-		emissionShader.setMat4("view", view);
+		// screenpick shader
+		screenPickShader->use();
+		setProjection(*screenPickShader, width, height, fov);
+		screenPickShader->setMat4("view", view);
 
-		//skybox
+		// skybox
 		view = glm::lookAt(glm::vec3(0, -1, 0) , glm::vec3(0,-1,0) + cameraFront, cameraUp);
-		skyboxShader.use();
-		setProjection(skyboxShader, width, height, fov);
-		skyboxShader.setMat4("view", view);
-		skyboxShader.setVec3("fogColor", glm::vec3(ambientColor.x, ambientColor.y, ambientColor.z));
+		skyboxShader->use();
+		setProjection(*skyboxShader, width, height, fov);
+		skyboxShader->setMat4("view", view);
+		skyboxShader->setVec3("fogColor", glm::vec3(ambientColor.x, ambientColor.y, ambientColor.z));		
 
-		//obj.draw();
+		// update "entities"
 		objective.update(cameraPos, batteryLevel, deltaTime);
-		updateFlashLight(theShader, guiShader, batteryLevel, deltaTime);
+		updateFlashLight(*theShader, *guiShader, batteryLevel, deltaTime);
 		monster.update(cameraPos, cameraFront, deltaTime, flashLightOn);
 
 		// Setup test buffer
@@ -191,23 +169,23 @@ int main(void) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
 
 		// test render ...
-		objectManager.drawObjects();
+		objectManager.drawObjects(screenPickShader, true);
+
 
 		// Go back to default buffer
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//draw stuff
+		// draw stuff
 		objectManager.drawObjects();
-
 		drawForest(*tree, forest, forestScale, numTrees);
-
 		imgui.render();
 
+		// display buffer
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -221,7 +199,7 @@ void glfwFrameBufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
-void getInput(GLFWwindow* window, Shader shader, float& fov, irrklang::ISound* walking, float batteryLevel) {
+void getInput(GLFWwindow* window, Shader shader, float& fov, irrklang::ISound* walking, float batteryLevel, GUI* gui) {
 	shader.use();
 	
 	//key detection
@@ -231,6 +209,9 @@ void getInput(GLFWwindow* window, Shader shader, float& fov, irrklang::ISound* w
 	else {
 		defaultMovement(window, shader, fov, walking, batteryLevel);
 	}
+
+	//mouse
+	mouseClicks(window, gui);
 	
 }
 
@@ -440,11 +421,11 @@ unsigned int loadTexture(const char* filePath) {
 	return texture;
 }
 
-void setProjection(Shader theShader, int width, int height, float fov) {
+void setProjection(Shader shader, int width, int height, float fov) {
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(fov), (float)width / (float)height, 0.1f, 1000.0f);
 
-	theShader.setMat4("projection", projection);
+	shader.setMat4("projection", projection);
 
 }
 
@@ -484,7 +465,6 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 		cameraFront = glm::normalize(front);
 
 	}
-
 }
 
 //runs once per key press
@@ -648,20 +628,83 @@ void collision(glm::vec3& playerPos, std::vector<glm::vec3>& forestPos, int numT
 void setupFrameBuffer(GLuint& framebuffer, GLuint& colorBuffer, GLuint& rbo) {
 	glGenFramebuffers(1, &framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	// create a color attachment texture
+	// actual color buffer, only thing we render
 	glGenTextures(1, &colorBuffer);
 	glBindTexture(GL_TEXTURE_2D, colorBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
-	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+	// create rbo to satisfy framebuffer requirements
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height); // use a single renderbuffer object for both a depth AND stencil buffer.
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+	// ensure framebuffer is complete
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		exit(-1);
+	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void reloadShaders() {
+	for (int i = 0; i < shaderList->size(); i++) {
+		(*shaderList)[i]->loadAndCompileShaders();
+	}
+	setupShaderUniforms();
+}
+
+void setupShaderUniforms() {
+	glm::mat4 model = glm::mat4(1.0f);
+	glm::mat4 view;
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+	//cube
+	theShader->use();
+	theShader->setMat4("model", model);
+	theShader->setMat4("view", view);
+	theShader->setFloat("material.shininess", 32.0f);
+	theShader->setVec3("viewPos", cameraPos);
+	setProjection(*theShader, width, height, fov);
+	setupLights(*theShader);
+
+	//light cube
+	emissionShader->use();
+	emissionShader->setMat4("model", model);
+	emissionShader->setMat4("view", view);
+	emissionShader->setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+	emissionShader->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	setProjection(*emissionShader, width, height, fov);
+
+	//skybox shader setup
+	skyboxShader->use();
+	skyboxShader->setMat4("model", model);
+	skyboxShader->setMat4("view", view);
+	setProjection(*skyboxShader, width, height, fov);
+
+	//gui shader setup
+	guiShader->use();
+	guiShader->setMat4("model", model);
+	guiShader->setMat4("view", view);
+	setProjection(*guiShader, width, height, fov);
+
+	//screen pick shader setup
+	screenPickShader->use();
+	screenPickShader->setMat4("model", model);
+	screenPickShader->setMat4("view", view);
+	setProjection(*screenPickShader, width, height, fov);
+}
+
+void mouseClicks(GLFWwindow* window, GUI* gui) {
+	static int oldstate = GLFW_RELEASE;
+	int newstate = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+	if (newstate == GLFW_PRESS && oldstate == GLFW_RELEASE) {
+		gui->click = 1;
+	}
+	else {
+		gui->click = 0;
+	}
+	oldstate = newstate;
+
 }
